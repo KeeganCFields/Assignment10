@@ -1,0 +1,59 @@
+################################################################
+# Shiny app by Keegan Fields
+# Oct 31, 2023
+#
+# Shows which RoadTypes and Intersections have most fatal crashes in USA
+#
+# Deployed at 
+# Source code at GitHub: https://
+################################################################
+library(shiny)
+library(ggplot2)
+library(dplyr)
+data1 <- read.csv("data.csv")
+
+
+ui <- fluidPage(
+  titlePanel("Fatalities by Road Type"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("state", "Select a State:", choices = unique(data1$STATENAME)),
+      selectInput("intname", "Select Intersection Type:", choices = unique(data1$TYP_INTNAME))
+    ),
+    mainPanel(
+      plotOutput("barPlot")
+    )
+  )
+)
+
+server <- function(input, output) {
+  filtered_data <- reactive({
+    data_filtered <- data1
+    if (input$state != "All") {
+      data_filtered <- data_filtered[data_filtered$STATENAME == input$state, ]
+    }
+    if (input$intname != "All") {
+      data_filtered <- data_filtered[data_filtered$TYP_INTNAME == input$intname, ]
+    }
+    data_filtered
+  })
+
+
+  output$barPlot <- renderPlot({
+    data_filtered <- filtered_data()
+   p <- ggplot(data_filtered, aes(x = ROUTENAME, y = FATALS, fill = ROUTENAME)) +
+      geom_bar(stat = "identity") +
+      labs(title = "Fatalities by Road Type", 
+           x = "Road Type",
+           y = "Fatalities") +
+     theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
+   print(p)
+    
+  })
+}
+
+
+
+
+# Run the application 
+shinyApp(ui = ui, server = server)
